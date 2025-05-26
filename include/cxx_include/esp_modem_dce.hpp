@@ -102,7 +102,7 @@ public:
     }
 
 #ifdef CONFIG_ESP_MODEM_URC_HANDLER
-    void set_urc(urc_line_cb on_read_cb)
+    void set_urc(got_line_cb on_read_cb)
     {
         dte->set_urc_cb(on_read_cb);
     }

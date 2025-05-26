@@ -567,7 +567,14 @@ extern "C" esp_err_t esp_modem_set_urc(esp_modem_dce_t *dce_wrap, esp_err_t(*got
         return ESP_OK;
     }
     dce_wrap->dce->set_urc([got_line_fn](uint8_t *data, size_t len) {
-        return got_line_fn(data, len);
+        switch (got_line_fn(data, len)) {
+        case ESP_OK:
+            return command_result::OK;
+        case ESP_FAIL:
+            return command_result::FAIL;
+        default:
+            return command_result::TIMEOUT;
+        }
     });
     return ESP_OK;
 }

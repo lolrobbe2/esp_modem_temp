@@ -111,7 +111,7 @@ public:
      * @brief Allow setting a line callback for all incoming data
      * @param line_cb
      */
-    void set_urc_cb(urc_line_cb line_cb)
+    void set_urc_cb(got_line_cb line_cb)
     {
         command_cb.urc_handler = std::move(line_cb);
     }
@@ -215,8 +215,7 @@ private:
      */
     struct command_cb {
 #ifdef CONFIG_ESP_MODEM_URC_HANDLER
-        urc_line_cb urc_handler {};                             /*!< URC callback if enabled */
-        uint32_t urc_offset = 0;                                /*!< URC callback buffer offset if enabled */
+        got_line_cb urc_handler {};                             /*!< URC callback if enabled */
 #endif
         static const size_t GOT_LINE = SignalGroup::bit0;       /*!< Bit indicating response available */
         got_line_cb got_line;                                   /*!< Supplied command callback */

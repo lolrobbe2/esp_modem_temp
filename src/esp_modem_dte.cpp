@@ -154,18 +154,7 @@ command_result DTE::command(const std::string &command, got_line_cb got_line, ui
     primary_term->write((uint8_t *)command.c_str(), command.length());
     command_cb.wait_for_line(time_ms);
     command_cb.set(nullptr);
-#ifdef CONFIG_ESP_MODEM_URC_HANDLER
-    if(command_cb.urc_offset != buffer.consumed) 
-    {
-        /* we have not consumed all the URC data, wrap the buffer */
-        buffer.wrap();
-    }
-
     buffer.consumed = 0;
-    command_cb.urc_offset = 0;
-#else
-    buffer.consumed = 0;
-#endif
 
 #ifdef CONFIG_ESP_MODEM_USE_INFLATABLE_BUFFER_IF_NEEDED
     inflatable.deflate();
@@ -381,18 +370,23 @@ void DTE::on_read(got_line_cb on_read_cb)
 bool DTE::command_cb::process_line(uint8_t *data, size_t consumed, size_t len)
 {
 #ifdef CONFIG_ESP_MODEM_URC_HANDLER
+    command_result commandResult = command_result::FAIL;
     if (urc_handler) {
-        urc_offset += urc_handler(data + urc_offset, consumed + len - urc_offset);
+        commandResult = urc_handler(data , consumed + len);
     }
-    if (result != command_result::TIMEOUT || got_line == nullptr) {
-        return false;   // this line has been processed already (got OK or FAIL previously)
+    if (result != command_result::TIMEOUT && got_line == nullptr) {
+        return false;
     }
 #endif
     if (memchr(data + consumed, separator, len)) {
-        result = got_line(data + urc_offset, consumed + len - urc_offset);
+        result = got_line(data + consumed, consumed + len);
         if (result == command_result::OK || result == command_result::FAIL) {
             signal.set(GOT_LINE);
+#ifdef CONFIG_ESP_MODEM_URC_HANDLER
+            return commandResult == command_result::OK;
+#else
             return true;
+#endif
         }
     }
     return false;
